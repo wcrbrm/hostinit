@@ -1,146 +1,9 @@
 pub mod cli;
 pub mod config;
+pub mod connect;
 pub mod logging;
 pub mod prelude;
-pub mod system;
-
-use anyhow::Context;
-use async_ssh2_tokio::client::{AuthMethod, Client, ServerCheckMethod};
-use std::path::Path;
-
-pub fn tilde_with_context<SI: ?Sized, P, HD>(input: &SI, home_dir: HD) -> String
-where
-    SI: AsRef<str>,
-    P: AsRef<Path>,
-    HD: FnOnce() -> Option<P>,
-{
-    let input_str = input.as_ref();
-    if input_str.starts_with("~") {
-        let input_after_tilde = &input_str[1..];
-        if input_after_tilde.is_empty() || input_after_tilde.starts_with("/") {
-            if let Some(hd) = home_dir() {
-                let result = format!("{}{}", hd.as_ref().display(), input_after_tilde);
-                result.into()
-            } else {
-                // home dir is not available
-                input_str.into()
-            }
-        } else {
-            // we cannot handle `~otheruser/` paths yet
-            input_str.into()
-        }
-    } else {
-        // input doesn't start with tilde
-        input_str.into()
-    }
-}
-
-// get ssh client, combine args and config, config has higher priority
-pub async fn get_client(args: config::Ssh, cfg: &config::Config) -> anyhow::Result<Client> {
-    let raw_path_key = match &cfg.ssh {
-        Some(ssh) => match &ssh.remote_key_file {
-            Some(file) => file.to_string(),
-            None => args
-                .remote_key_file
-                .context("no private key file provided")?,
-        },
-        None => args
-            .remote_key_file
-            .context("no private key file provided")?,
-    };
-    let path_key = tilde_with_context(&raw_path_key, dirs::home_dir);
-    let private_key =
-        std::fs::read_to_string(&path_key).context(format!("invalid private key {}", path_key))?;
-    let method = AuthMethod::with_key(&private_key, None);
-    let host = match &cfg.ssh {
-        Some(ssh) => match &ssh.remote_host {
-            Some(host) => host.to_string(),
-            None => args.remote_host.unwrap_or("".to_string()),
-        },
-        None => args.remote_host.unwrap_or("".to_string()),
-    };
-    let port = match &cfg.ssh {
-        Some(ssh) => match &ssh.remote_port {
-            Some(port) => *port,
-            None => args.remote_port.unwrap_or(22),
-        },
-        None => args.remote_port.unwrap_or(22),
-    };
-    let username = match &cfg.ssh {
-        Some(ssh) => match &ssh.remote_user {
-            Some(host) => host.to_string(),
-            None => args.remote_user.unwrap_or("".to_string()),
-        },
-        None => args.remote_user.unwrap_or("".to_string()),
-    };
-    Ok(
-        Client::connect((host, port), &username, method, ServerCheckMethod::NoCheck)
-            .await
-            .unwrap(),
-    )
-}
-
-mod remote {
-    use crate::config::Stage;
-    use crate::prelude::*;
-    use color_eyre::owo_colors::OwoColorize;
-
-    #[instrument(skip(client))]
-    pub async fn install(client: &Client, name: &str, stage: &Stage) -> anyhow::Result<()> {
-        println!("=== {}", name.yellow());
-
-        if let Some(opt) = &stage.mount {
-            let alias = "mount";
-            match crate::system::mount::on_install(client, opt).await {
-                Ok(_) => println!("+ {}: {}", alias.green(), "OK".green()),
-                Err(e) => println!("- {}: {} {}", alias.red(), "FAILURE".red(), e),
-            }
-        }
-        if let Some(opt) = &stage.mkdir {
-            let alias = "mkdir";
-            match crate::system::mkdir::on_install(client, opt).await {
-                Ok(_) => println!("+ {}: {}", alias.green(), "OK".green()),
-                Err(e) => println!("- {}: {} {}", alias.red(), "FAILURE".red(), e),
-            }
-        }
-        if let Some(opt) = &stage.apt {
-            let alias = "apt";
-            match crate::system::apt::on_install(client, opt).await {
-                Ok(_) => println!("+ {}: {}", alias.green(), "OK".green()),
-                Err(e) => println!("- {}: {} {}", alias.red(), "FAILURE".red(), e),
-            }
-        }
-        Ok(())
-    }
-
-    #[instrument(skip(client))]
-    pub async fn check(client: &Client, name: &str, stage: &Stage) -> anyhow::Result<()> {
-        println!("=== {}", name.yellow());
-
-        if let Some(opt) = &stage.mount {
-            let alias = "mount";
-            match crate::system::mount::on_check(client, opt).await {
-                Ok(status) => status.print(alias),
-                Err(e) => println!("- {}: {} {}", alias.red(), "FAILURE".red(), e),
-            }
-        }
-        if let Some(opt) = &stage.mkdir {
-            let alias = "mkdir";
-            match crate::system::mkdir::on_check(client, opt).await {
-                Ok(status) => status.print(alias),
-                Err(e) => println!("- {}: {} {}", alias.red(), "FAILURE".red(), e),
-            }
-        }
-        if let Some(opt) = &stage.apt {
-            let alias = "apt";
-            match crate::system::apt::on_check(client, opt).await {
-                Ok(status) => status.print(alias),
-                Err(e) => println!("- {}: {} {}", alias.red(), "FAILURE".red(), e),
-            }
-        }
-        Ok(())
-    }
-}
+pub mod remote;
 
 use clap::Parser;
 use tracing::*;
@@ -160,7 +23,7 @@ pub async fn main() -> anyhow::Result<()> {
             // read toml config from file
             let cfg: config::Config =
                 toml::from_str(&std::fs::read_to_string(&file).unwrap()).unwrap();
-            let client = get_client(ssh, &cfg).await.unwrap();
+            let client = connect::get_client(ssh, &cfg).await.unwrap();
             for (name, stage) in cfg.stages {
                 remote::install(&client, &name, &stage).await.unwrap();
             }
@@ -168,7 +31,7 @@ pub async fn main() -> anyhow::Result<()> {
         cli::Action::Check { file } => {
             let cfg: config::Config =
                 toml::from_str(&std::fs::read_to_string(&file).unwrap()).unwrap();
-            let client = get_client(ssh, &cfg).await.unwrap();
+            let client = connect::get_client(ssh, &cfg).await.unwrap();
             for (name, stage) in cfg.stages {
                 remote::check(&client, &name, &stage).await.unwrap();
             }

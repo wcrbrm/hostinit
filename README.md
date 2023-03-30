@@ -36,7 +36,7 @@ mount = { to = "/data" }
 mkdir = { perm = "0777", sudo = true, folders = ["/data/exchange", "/data/weblogs", "/data/logs", "/data/webcache" ] }
 
 [stages.docker]
-apt = { install = [ "gnupg", "ca-certificates", "build-essentials", "curl", "jq", "vim", "vifm" ] }
+apt = { install = [ "gnupg", "ca-certificates", "build-essential", "curl", "jq", "vim", "vifm" ] }
 docker = { path = "/data" }
 terraform
 ```

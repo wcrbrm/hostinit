@@ -1,6 +1,5 @@
-use crate::system::apt::AptOptions;
-use crate::system::mkdir::MkdirOptions;
-use crate::system::mount::MountOptions;
+use crate::remote::Stage;
+
 use serde::Deserialize;
 use std::collections::BTreeMap as Map;
 
@@ -18,13 +17,6 @@ pub struct Ssh {
     pub remote_key_file: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
-pub struct Stage {
-    pub mount: Option<MountOptions>,
-    pub mkdir: Option<MkdirOptions>,
-    pub apt: Option<AptOptions>,
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -39,7 +31,7 @@ mount = { to = "/data" }
 mkdir = { perm = "0777", sudo = true, folders = ["/data/exchange", "/data/weblogs", "/data/logs", "/data/webcache" ] }
 
 [stages.essentials]
-apt = { install = [ "gnupg", "ca-certificates", "build-essentials", "curl", "jq", "vim", "vifm" ] }
+apt = { install = [ "gnupg", "ca-certificates", "build-essential", "curl", "jq", "vim", "vifm" ] }
 
 [stages.docker]
 docker = { path = "/data" }

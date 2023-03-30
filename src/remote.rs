@@ -10,6 +10,9 @@ pub use mkdir::MkdirOptions;
 pub mod mount;
 pub use mount::MountOptions;
 
+pub mod terraform;
+pub use terraform::TerraformOptions;
+
 // use crate::prelude::*;
 use async_ssh2_tokio::client::Client;
 use color_eyre::owo_colors::OwoColorize;
@@ -22,6 +25,7 @@ pub struct Stage {
     pub mkdir: Option<MkdirOptions>,
     pub apt: Option<AptOptions>,
     pub docker: Option<DockerOptions>,
+    pub terraform: Option<TerraformOptions>,
 }
 
 #[instrument(skip(client))]
@@ -52,6 +56,13 @@ pub async fn install(client: &Client, name: &str, stage: &Stage) -> anyhow::Resu
     if let Some(opt) = &stage.docker {
         let alias = "docker";
         match docker::on_install(client, opt).await {
+            Ok(_) => println!("+ {}: {}", alias.green(), "OK".green()),
+            Err(e) => println!("- {}: {} {}", alias.red(), "FAILURE".red(), e),
+        }
+    }
+    if let Some(opt) = &stage.terraform {
+        let alias = "terraform";
+        match terraform::on_install(client, opt).await {
             Ok(_) => println!("+ {}: {}", alias.green(), "OK".green()),
             Err(e) => println!("- {}: {} {}", alias.red(), "FAILURE".red(), e),
         }
@@ -87,6 +98,13 @@ pub async fn check(client: &Client, name: &str, stage: &Stage) -> anyhow::Result
     if let Some(opt) = &stage.docker {
         let alias = "docker";
         match docker::on_check(client, opt).await {
+            Ok(status) => status.print(alias),
+            Err(e) => println!("- {}: {} {}", alias.red(), "FAILURE".red(), e),
+        }
+    }
+    if let Some(opt) = &stage.terraform {
+        let alias = "terraform";
+        match terraform::on_check(client, opt).await {
             Ok(status) => status.print(alias),
             Err(e) => println!("- {}: {} {}", alias.red(), "FAILURE".red(), e),
         }

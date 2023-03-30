@@ -102,20 +102,16 @@ pub async fn on_check(client: &Client, opt: &DockerOptions) -> anyhow::Result<St
         Ok(res) => success.push(res),
         Err(res) => fail.push(res.to_string()),
     };
-    // match which(client, "docker-compose --version 2>&1").await {
-    //     Ok(res) => success.push(res),
-    //     Err(res) => fail.push(res.to_string()),
-    // };
 
-    if file_exists(client, "/etc/apt/keyrings/docker.gpg").await {
-        success.push("docker gpg key ok".to_string());
+    if file_exists(client, GPG_PATH).await {
+        success.push("gpg key ok".to_string());
     } else {
-        fail.push("missing docker gpg key".to_string());
+        fail.push("missing gpg key".to_string());
     }
-    if file_exists(client, "/etc/apt/sources.list.d/docker.list").await {
-        success.push("/etc/apt/sources.list.d/docker.list ok".to_string());
+    if file_exists(client, SOURCES_LIST_PATH).await {
+        success.push("sources list ok".to_string());
     } else {
-        fail.push("missing /etc/apt/sources.list.d/docker.list".to_string());
+        fail.push(format!("missing {}", SOURCES_LIST_PATH));
     }
     if some_output(client, "cat /etc/group | grep docker | grep $USER").await {
         success.push("current user is in docker group".to_string());

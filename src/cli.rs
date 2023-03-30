@@ -7,12 +7,18 @@ pub enum Action {
         /// path to files
         #[clap(short, long)]
         file: std::path::PathBuf,
+        /// if specified, only run this stage
+        #[clap(short, long)]
+        stage: Option<String>,
     },
     /// Check installation
     Check {
         /// path to files
         #[clap(short, long)]
         file: std::path::PathBuf,
+        /// if specified, only check this stage
+        #[clap(short, long)]
+        stage: Option<String>,
     },
 }
 

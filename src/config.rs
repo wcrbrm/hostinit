@@ -1,3 +1,4 @@
+use crate::system::apt::AptOptions;
 use crate::system::mkdir::MkdirOptions;
 use crate::system::mount::MountOptions;
 use serde::Deserialize;
@@ -21,6 +22,7 @@ pub struct Ssh {
 pub struct Stage {
     pub mount: Option<MountOptions>,
     pub mkdir: Option<MkdirOptions>,
+    pub apt: Option<AptOptions>,
 }
 
 #[cfg(test)]

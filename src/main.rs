@@ -81,24 +81,33 @@ pub async fn get_client(args: config::Ssh, cfg: &config::Config) -> anyhow::Resu
 }
 
 mod remote {
-    use crate::prelude::*;
-    //  use crate::system::mount::{self, MountOptions};
     use crate::config::Stage;
+    use crate::prelude::*;
+    use color_eyre::owo_colors::OwoColorize;
 
     #[instrument(skip(client))]
     pub async fn install(client: &Client, name: &str, stage: &Stage) -> anyhow::Result<()> {
-        println!("=== stage: {}", name);
+        println!("=== {}", name.yellow());
 
         if let Some(opt) = &stage.mount {
+            let alias = "mount";
             match crate::system::mount::on_install(client, opt).await {
-                Ok(_) => println!("+ mount: OK"),
-                Err(e) => error!("- mount: FAILURE {}", e),
+                Ok(_) => println!("+ {}: {}", alias.green(), "OK".green()),
+                Err(e) => println!("- {}: {} {}", alias.red(), "FAILURE".red(), e),
             }
         }
         if let Some(opt) = &stage.mkdir {
+            let alias = "mkdir";
             match crate::system::mkdir::on_install(client, opt).await {
-                Ok(_) => println!("+ mkdir: OK"),
-                Err(e) => error!("- mkdir: FAILURE {}", e),
+                Ok(_) => println!("+ {}: {}", alias.green(), "OK".green()),
+                Err(e) => println!("- {}: {} {}", alias.red(), "FAILURE".red(), e),
+            }
+        }
+        if let Some(opt) = &stage.apt {
+            let alias = "apt";
+            match crate::system::apt::on_install(client, opt).await {
+                Ok(_) => println!("+ {}: {}", alias.green(), "OK".green()),
+                Err(e) => println!("- {}: {} {}", alias.red(), "FAILURE".red(), e),
             }
         }
         Ok(())
@@ -106,18 +115,27 @@ mod remote {
 
     #[instrument(skip(client))]
     pub async fn check(client: &Client, name: &str, stage: &Stage) -> anyhow::Result<()> {
-        println!("=== stage: {}", name);
+        println!("=== {}", name.yellow());
 
         if let Some(opt) = &stage.mount {
+            let alias = "mount";
             match crate::system::mount::on_check(client, opt).await {
-                Ok(status) => println!("+ mount: {:?}", status),
-                Err(e) => error!("- mount: {:?}", e),
+                Ok(status) => status.print(alias),
+                Err(e) => println!("- {}: {} {}", alias.red(), "FAILURE".red(), e),
             }
         }
         if let Some(opt) = &stage.mkdir {
+            let alias = "mkdir";
             match crate::system::mkdir::on_check(client, opt).await {
-                Ok(status) => println!("+ mkdir: {:?}", status),
-                Err(e) => error!("- mkdir: {:?}", e),
+                Ok(status) => status.print(alias),
+                Err(e) => println!("- {}: {} {}", alias.red(), "FAILURE".red(), e),
+            }
+        }
+        if let Some(opt) = &stage.apt {
+            let alias = "apt";
+            match crate::system::apt::on_check(client, opt).await {
+                Ok(status) => status.print(alias),
+                Err(e) => println!("- {}: {} {}", alias.red(), "FAILURE".red(), e),
             }
         }
         Ok(())
@@ -129,7 +147,7 @@ use tracing::*;
 
 #[tokio::main]
 pub async fn main() -> anyhow::Result<()> {
-    dotenv::dotenv().unwrap();
+    let _ = dotenv::dotenv();
     color_eyre::install().unwrap();
     logging::start();
 

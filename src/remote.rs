@@ -1,6 +1,9 @@
 pub mod apt;
 pub use apt::AptOptions;
 
+pub mod docker;
+pub use docker::DockerOptions;
+
 pub mod mkdir;
 pub use mkdir::MkdirOptions;
 
@@ -18,6 +21,7 @@ pub struct Stage {
     pub mount: Option<MountOptions>,
     pub mkdir: Option<MkdirOptions>,
     pub apt: Option<AptOptions>,
+    pub docker: Option<DockerOptions>,
 }
 
 #[instrument(skip(client))]
@@ -41,6 +45,13 @@ pub async fn install(client: &Client, name: &str, stage: &Stage) -> anyhow::Resu
     if let Some(opt) = &stage.apt {
         let alias = "apt";
         match apt::on_install(client, opt).await {
+            Ok(_) => println!("+ {}: {}", alias.green(), "OK".green()),
+            Err(e) => println!("- {}: {} {}", alias.red(), "FAILURE".red(), e),
+        }
+    }
+    if let Some(opt) = &stage.docker {
+        let alias = "docker";
+        match docker::on_install(client, opt).await {
             Ok(_) => println!("+ {}: {}", alias.green(), "OK".green()),
             Err(e) => println!("- {}: {} {}", alias.red(), "FAILURE".red(), e),
         }
@@ -69,6 +80,13 @@ pub async fn check(client: &Client, name: &str, stage: &Stage) -> anyhow::Result
     if let Some(opt) = &stage.apt {
         let alias = "apt";
         match apt::on_check(client, opt).await {
+            Ok(status) => status.print(alias),
+            Err(e) => println!("- {}: {} {}", alias.red(), "FAILURE".red(), e),
+        }
+    }
+    if let Some(opt) = &stage.docker {
+        let alias = "docker";
+        match docker::on_check(client, opt).await {
             Ok(status) => status.print(alias),
             Err(e) => println!("- {}: {} {}", alias.red(), "FAILURE".red(), e),
         }

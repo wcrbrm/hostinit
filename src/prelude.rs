@@ -5,6 +5,61 @@ pub use serde::{Deserialize, Serialize};
 pub use serde_aux::prelude::*;
 pub use tracing::*;
 
+pub enum Os {
+    Ubuntu,
+    Debian,
+    Unsupported,
+}
+
+pub async fn osinfo(client: &Client) -> Os {
+    match silent(&client, "uname -a").await {
+        Ok(out) => {
+            if out.output.contains("Ubuntu") {
+                Os::Ubuntu
+            } else if out.output.contains("Debian") {
+                Os::Debian
+            } else {
+                Os::Unsupported
+            }
+        }
+        Err(_) => Os::Unsupported,
+    }
+}
+
+pub async fn which(client: &Client, cmd: &str) -> anyhow::Result<String> {
+    match silent(&client, &cmd).await {
+        Ok(out) => {
+            if out.exit_status == 0 {
+                return Ok(out.output.trim().to_string());
+            } else {
+                bail!(out.output.trim().replace("bash: line 1: ", "").to_string());
+            }
+        }
+        Err(_) => bail!("not installed"),
+    }
+}
+
+pub async fn some_output(client: &Client, cmd: &str) -> bool {
+    match silent(&client, &cmd).await {
+        Ok(out) => {
+            if out.exit_status == 0 {
+                !out.output.trim().is_empty()
+            } else {
+                false
+            }
+        }
+        Err(_) => false,
+    }
+}
+
+pub async fn file_exists(client: &Client, filename: &str) -> bool {
+    let cmd = format!("ls -1 {}", filename);
+    match silent(&client, &cmd).await {
+        Ok(out) => out.exit_status == 0,
+        Err(_) => false,
+    }
+}
+
 /// run and fail on any exit_status that is not 0
 #[instrument(skip(client), level = "debug")]
 pub async fn run(client: &Client, cmd: &str) -> anyhow::Result<CommandExecutedResult> {

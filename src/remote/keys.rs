@@ -9,12 +9,15 @@ pub struct KeysOptions {
 #[instrument(skip(client))]
 pub async fn on_install(client: &Client, opt: &KeysOptions) -> anyhow::Result<()> {
     // syncing each local key with the remote location
+    // such approach works only for small base64-encoded key files
     for file in &opt.sync {
         let local_path = crate::connect::tilde_with_context(&file, dirs::home_dir);
         let contents = std::fs::read_to_string(&local_path)?;
 
-        let cmd = format!("echo '{}' > {}", contents, file);
-        run(&client, &cmd).await?;
+        if !file_exists(client, &file).await {
+            let cmd = format!("echo '{}' > {}", contents, file);
+            run(&client, &cmd).await?;
+        }
 
         if let Some(perm) = &opt.perm {
             let cmd = format!("chmod {} {}", perm, file);

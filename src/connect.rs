@@ -36,7 +36,7 @@ pub async fn get_client(args: Ssh, cfg: &Config) -> anyhow::Result<Client> {
         let password = match &cfg.ssh {
             Some(ssh) => match &ssh.remote_password {
                 Some(password) => password.to_string(),
-                None => args.remote_password.context("no password provided")?,
+                None => args.remote_password.unwrap_or("".to_string()),
             },
             None => "".to_string(),
         };

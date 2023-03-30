@@ -1,0 +1,23 @@
+[package]
+name = "remote-playbook"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.70"
+async-ssh2-tokio = { version = "0.6.4", features = ["openssl"] }
+atty = "0.2.14"
+clap = { version = "4.2.0", features = ["env", "derive"] }
+color-eyre = "0.6.2"
+dirs = "5.0.0"
+dotenv = "0.15.0"
+serde = { version = "1.0.159", features = ["derive"] }
+serde-aux = "4.1.2"
+serde_json = "1.0.95"
+tokio = { version = "1.27.0", features = ["full"] }
+toml = "0.7.3"
+tracing = "0.1.37"
+tracing-error = "0.2.0"
+tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }

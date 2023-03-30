@@ -35,6 +35,9 @@ pub struct Opts {
     /// remote SSH port
     #[clap(long, default_value = "22", env = "REMOTE_SSH_PORT")]
     pub remote_port: u16,
+    /// remote SSH password, if not provided, will use key file
+    #[clap(long, default_value = "", env = "REMOTE_SSH_PASSWORD")]
+    pub remote_password: String,
     /// path to id_rsa file
     #[clap(long, default_value = "~/.ssh/id_rsa", env = "REMOTE_SSH_KEY_FILE")]
     pub remote_key_file: String,
@@ -57,6 +60,11 @@ impl Opts {
             },
             remote_user: if self.remote_user.len() > 0 {
                 Some(self.remote_user.clone())
+            } else {
+                None
+            },
+            remote_password: if self.remote_password.len() > 0 {
+                Some(self.remote_password.clone())
             } else {
                 None
             },

@@ -14,6 +14,7 @@ pub struct Ssh {
     pub remote_host: Option<String>,
     pub remote_user: Option<String>,
     pub remote_port: Option<u16>,
+    pub remote_password: Option<String>,
     pub remote_key_file: Option<String>,
 }
 

@@ -4,6 +4,9 @@ pub use apt::AptOptions;
 pub mod docker;
 pub use docker::DockerOptions;
 
+pub mod keys;
+pub use keys::KeysOptions;
+
 pub mod mkdir;
 pub use mkdir::MkdirOptions;
 
@@ -24,6 +27,7 @@ pub struct Stage {
     pub mount: Option<MountOptions>,
     pub mkdir: Option<MkdirOptions>,
     pub apt: Option<AptOptions>,
+    pub keys: Option<KeysOptions>,
     pub docker: Option<DockerOptions>,
     pub terraform: Option<TerraformOptions>,
 }
@@ -42,6 +46,13 @@ pub async fn install(client: &Client, name: &str, stage: &Stage) -> anyhow::Resu
     if let Some(opt) = &stage.mkdir {
         let alias = "mkdir";
         match mkdir::on_install(client, opt).await {
+            Ok(_) => println!("+ {}: {}", alias.green(), "OK".green()),
+            Err(e) => println!("- {}: {} {}", alias.red(), "FAILURE".red(), e),
+        }
+    }
+    if let Some(opt) = &stage.keys {
+        let alias = "keys";
+        match keys::on_install(client, opt).await {
             Ok(_) => println!("+ {}: {}", alias.green(), "OK".green()),
             Err(e) => println!("- {}: {} {}", alias.red(), "FAILURE".red(), e),
         }
@@ -95,6 +106,14 @@ pub async fn check(client: &Client, name: &str, stage: &Stage) -> anyhow::Result
             Err(e) => println!("- {}: {} {}", alias.red(), "FAILURE".red(), e),
         }
     }
+    if let Some(opt) = &stage.keys {
+        let alias = "keys";
+        match keys::on_check(client, opt).await {
+            Ok(status) => status.print(alias),
+            Err(e) => println!("- {}: {} {}", alias.red(), "FAILURE".red(), e),
+        }
+    }
+
     if let Some(opt) = &stage.docker {
         let alias = "docker";
         match docker::on_check(client, opt).await {

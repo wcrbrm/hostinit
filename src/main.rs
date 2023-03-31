@@ -26,13 +26,24 @@ pub async fn main() -> anyhow::Result<()> {
             let client = connect::get_client(ssh, &cfg).await.unwrap();
             match stage {
                 Some(stage) => {
-                    remote::install(&client, &stage, &cfg.stages[&stage])
-                        .await
-                        .unwrap();
+                    if stage == "aliases" {
+                        if let Some(aliases) = &cfg.aliases {
+                            remote::alias::install(&client, aliases).await.unwrap();
+                        } else {
+                            panic!("no aliases declared");
+                        }
+                    } else {
+                        remote::install(&client, &stage, &cfg.stages[&stage])
+                            .await
+                            .unwrap();
+                    }
                 }
                 None => {
                     for (name, stage) in cfg.stages {
                         remote::install(&client, &name, &stage).await.unwrap();
+                    }
+                    if let Some(aliases) = &cfg.aliases {
+                        remote::alias::install(&client, aliases).await.unwrap();
                     }
                 }
             }
@@ -43,13 +54,24 @@ pub async fn main() -> anyhow::Result<()> {
             let client = connect::get_client(ssh, &cfg).await.unwrap();
             match stage {
                 Some(stage) => {
-                    remote::check(&client, &stage, &cfg.stages[&stage])
-                        .await
-                        .unwrap();
+                    if stage == "aliases" {
+                        if let Some(aliases) = &cfg.aliases {
+                            remote::alias::check(&client, aliases).await.unwrap();
+                        } else {
+                            panic!("no aliases declared");
+                        }
+                    } else {
+                        remote::check(&client, &stage, &cfg.stages[&stage])
+                            .await
+                            .unwrap();
+                    }
                 }
                 None => {
                     for (name, stage) in cfg.stages {
                         remote::check(&client, &name, &stage).await.unwrap();
+                    }
+                    if let Some(aliases) = &cfg.aliases {
+                        remote::alias::check(&client, aliases).await.unwrap();
                     }
                 }
             }

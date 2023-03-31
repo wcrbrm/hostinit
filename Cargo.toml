@@ -10,6 +10,7 @@ description = "Remote SSH playbook interpreter, no remote setup"
 anyhow = "1.0.70"
 async-ssh2-tokio = { version = "0.6.4", features = ["openssl"] }
 atty = "0.2.14"
+base64 = "0.21.0"
 clap = { version = "4.2.0", features = ["env", "derive"] }
 color-eyre = "0.6.2"
 dirs = "5.0.0"

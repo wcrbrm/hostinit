@@ -1,8 +1,9 @@
 pub use anyhow::{bail, Context};
 pub use async_ssh2_tokio::client::{Client, CommandExecutedResult};
-use color_eyre::owo_colors::OwoColorize;
+pub use color_eyre::owo_colors::OwoColorize;
 pub use serde::{Deserialize, Serialize};
 pub use serde_aux::prelude::*;
+pub use std::collections::BTreeMap as Map;
 pub use tracing::*;
 
 pub enum Os {

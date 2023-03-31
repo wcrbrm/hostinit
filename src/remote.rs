@@ -1,3 +1,5 @@
+pub mod alias; // this module is treated as aseparate section
+
 pub mod apt;
 pub use apt::AptOptions;
 

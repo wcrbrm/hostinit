@@ -27,7 +27,7 @@ pub async fn on_install(client: &Client, opt: &MkdirOptions) -> anyhow::Result<(
 
     let default = "0777".to_string();
     let perm = opt.perm.as_ref().unwrap_or(&default);
-    let cmd2 = format!("{} chown -R {} {}", sudo_prefix, perm, list);
+    let cmd2 = format!("{} chmod -R {} {}", sudo_prefix, perm, list);
     run(&client, &cmd2).await?;
     Ok(())
 }

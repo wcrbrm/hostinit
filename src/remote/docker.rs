@@ -114,9 +114,9 @@ pub async fn on_check(client: &Client, opt: &DockerOptions) -> anyhow::Result<St
         fail.push(format!("missing {}", SOURCES_LIST_PATH));
     }
     if some_output(client, "cat /etc/group | grep docker | grep $USER").await {
-        success.push("current user is in docker group".to_string());
+        success.push("user is in docker group".to_string());
     } else {
-        fail.push("current user is not in docker group".to_string());
+        fail.push("user is not in docker group".to_string());
     }
 
     Ok(Status::new(success, fail))

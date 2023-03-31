@@ -45,7 +45,7 @@ pub async fn on_check(client: &Client, opt: &AptOptions) -> anyhow::Result<Statu
             Ok(output) => {
                 if output.exit_status == 0 {
                     if output.output.contains("Status: install ok installed") {
-                        success.push(format!("{} found", package));
+                        success.push(format!("{} ok", package));
                     } else {
                         fail.push(format!("{} missing", package));
                     }

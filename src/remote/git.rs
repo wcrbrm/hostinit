@@ -53,10 +53,9 @@ pub async fn on_check(client: &Client, opt: &GitOptions) -> anyhow::Result<Statu
     let mut fail = vec![];
 
     if file_exists(client, &opt.to).await {
-        success.push(format!("{} exists", opt.to));
         let git_config = format!("{}/.git/config", opt.to);
         if file_exists(client, &git_config).await {
-            success.push(format!("{} exists", opt.to));
+            success.push(format!("{} ok", opt.to));
         } else {
             fail.push(format!("{} missing", opt.to));
         }

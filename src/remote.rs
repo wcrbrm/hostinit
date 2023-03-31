@@ -19,6 +19,9 @@ pub use mount::MountOptions;
 pub mod terraform;
 pub use terraform::TerraformOptions;
 
+pub mod aws;
+pub use aws::AwsOptions;
+
 // use crate::prelude::*;
 use async_ssh2_tokio::client::Client;
 use color_eyre::owo_colors::OwoColorize;
@@ -32,13 +35,14 @@ pub struct Stage {
     pub apt: Option<AptOptions>,
     pub keys: Option<KeysOptions>,
     pub git: Option<GitOptions>,
+    pub aws: Option<AwsOptions>,
     pub docker: Option<DockerOptions>,
     pub terraform: Option<TerraformOptions>,
 }
 
 #[instrument(skip(client))]
 pub async fn install(client: &Client, name: &str, stage: &Stage) -> anyhow::Result<()> {
-    println!("=== {}", name.yellow());
+    println!("= {}", name.yellow());
 
     if let Some(opt) = &stage.mount {
         let alias = "mount";
@@ -89,12 +93,19 @@ pub async fn install(client: &Client, name: &str, stage: &Stage) -> anyhow::Resu
             Err(e) => println!("- {}: {} {}", alias.red(), "FAILURE".red(), e),
         }
     }
+    if let Some(opt) = &stage.aws {
+        let alias = "aws";
+        match aws::on_install(client, opt).await {
+            Ok(_) => println!("+ {}: {}", alias.green(), "OK".green()),
+            Err(e) => println!("- {}: {} {}", alias.red(), "FAILURE".red(), e),
+        }
+    }
     Ok(())
 }
 
 #[instrument(skip(client))]
 pub async fn check(client: &Client, name: &str, stage: &Stage) -> anyhow::Result<()> {
-    println!("=== {}", name.yellow());
+    println!("= {}", name.yellow());
 
     if let Some(opt) = &stage.mount {
         let alias = "mount";
@@ -127,6 +138,13 @@ pub async fn check(client: &Client, name: &str, stage: &Stage) -> anyhow::Result
     if let Some(opt) = &stage.git {
         let alias = "git";
         match git::on_check(client, opt).await {
+            Ok(status) => status.print(alias),
+            Err(e) => println!("- {}: {} {}", alias.red(), "FAILURE".red(), e),
+        }
+    }
+    if let Some(opt) = &stage.aws {
+        let alias = "aws";
+        match aws::on_check(client, opt).await {
             Ok(status) => status.print(alias),
             Err(e) => println!("- {}: {} {}", alias.red(), "FAILURE".red(), e),
         }

@@ -8,7 +8,7 @@ pub struct Config {
     pub ssh: Option<Ssh>,
     pub stages: Map<String, Stage>,
     pub aliases: Option<Map<String, String>>,
-    // pub exports: Option<Map<String, String>>,
+    pub exports: Option<Map<String, String>>,
 }
 
 #[derive(Debug, Deserialize)]

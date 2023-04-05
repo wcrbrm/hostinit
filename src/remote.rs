@@ -25,6 +25,12 @@ pub use terraform::TerraformOptions;
 pub mod aws;
 pub use aws::AwsOptions;
 
+pub mod node_exporter;
+pub use node_exporter::NodeExporterOptions;
+
+pub mod docker_stats;
+pub use docker_stats::DockerStatsOptions;
+
 // use crate::prelude::*;
 use async_ssh2_tokio::client::Client;
 use color_eyre::owo_colors::OwoColorize;
@@ -41,6 +47,10 @@ pub struct Stage {
     pub aws: Option<AwsOptions>,
     pub docker: Option<DockerOptions>,
     pub terraform: Option<TerraformOptions>,
+    #[serde(alias = "node-exporter")]
+    pub node_exporter: Option<NodeExporterOptions>,
+    #[serde(alias = "docker-stats")]
+    pub docker_stats: Option<DockerStatsOptions>,
 }
 
 #[instrument(skip(client))]
@@ -103,6 +113,20 @@ pub async fn install(client: &Client, name: &str, stage: &Stage) -> anyhow::Resu
             Err(e) => println!("- {}: {} {}", alias.red(), "FAILURE".red(), e),
         }
     }
+    if let Some(opt) = &stage.node_exporter {
+        let alias = "node-exporter";
+        match node_exporter::on_install(client, opt).await {
+            Ok(_) => println!("+ {}: {}", alias.green(), "OK".green()),
+            Err(e) => println!("- {}: {} {}", alias.red(), "FAILURE".red(), e),
+        }
+    }
+    if let Some(opt) = &stage.docker_stats {
+        let alias = "docker-stats";
+        match docker_stats::on_install(client, opt).await {
+            Ok(_) => println!("+ {}: {}", alias.green(), "OK".green()),
+            Err(e) => println!("- {}: {} {}", alias.red(), "FAILURE".red(), e),
+        }
+    }
     Ok(())
 }
 
@@ -145,13 +169,6 @@ pub async fn check(client: &Client, name: &str, stage: &Stage) -> anyhow::Result
             Err(e) => println!("- {}: {} {}", alias.red(), "FAILURE".red(), e),
         }
     }
-    if let Some(opt) = &stage.aws {
-        let alias = "aws";
-        match aws::on_check(client, opt).await {
-            Ok(status) => status.print(alias),
-            Err(e) => println!("- {}: {} {}", alias.red(), "FAILURE".red(), e),
-        }
-    }
     if let Some(opt) = &stage.docker {
         let alias = "docker";
         match docker::on_check(client, opt).await {
@@ -162,6 +179,27 @@ pub async fn check(client: &Client, name: &str, stage: &Stage) -> anyhow::Result
     if let Some(opt) = &stage.terraform {
         let alias = "terraform";
         match terraform::on_check(client, opt).await {
+            Ok(status) => status.print(alias),
+            Err(e) => println!("- {}: {} {}", alias.red(), "FAILURE".red(), e),
+        }
+    }
+    if let Some(opt) = &stage.aws {
+        let alias = "aws";
+        match aws::on_check(client, opt).await {
+            Ok(status) => status.print(alias),
+            Err(e) => println!("- {}: {} {}", alias.red(), "FAILURE".red(), e),
+        }
+    }
+    if let Some(opt) = &stage.node_exporter {
+        let alias = "node-exporter";
+        match node_exporter::on_check(client, opt).await {
+            Ok(status) => status.print(alias),
+            Err(e) => println!("- {}: {} {}", alias.red(), "FAILURE".red(), e),
+        }
+    }
+    if let Some(opt) = &stage.docker_stats {
+        let alias = "docker-stats";
+        match docker_stats::on_check(client, opt).await {
             Ok(status) => status.print(alias),
             Err(e) => println!("- {}: {} {}", alias.red(), "FAILURE".red(), e),
         }

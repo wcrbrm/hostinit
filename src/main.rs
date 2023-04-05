@@ -82,12 +82,6 @@ pub async fn main() -> anyhow::Result<()> {
                         remote::check(&client, &stage, &cfg.stages[&stage])
                             .await
                             .unwrap();
-                        if let Some(items) = &cfg.aliases {
-                            remote::alias::check(&client, items).await.unwrap();
-                        }
-                        if let Some(items) = &cfg.exports {
-                            remote::export::check(&client, items).await.unwrap();
-                        }
                     }
                 }
                 None => {

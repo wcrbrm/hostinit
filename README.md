@@ -39,6 +39,10 @@ mkdir = { perm = "0777", sudo = true, folders = ["/data/exchange", "/data/weblog
 apt = { install = [ "gnupg", "ca-certificates", "build-essential", "curl", "jq", "vim", "software-properties-common" ] }
 docker = { path = "/data" }
 terraform = {}
+
+[stages.exporters]
+node-exporter = {}
+docker-stats = {}
 ```
 
 ### Disclaimer

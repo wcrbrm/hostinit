@@ -162,17 +162,17 @@ pub async fn on_install(client: &Client, opt: &MountOptions) -> anyhow::Result<(
             debug!("{} {} is not busy\n", x.name, x.size);
         }
     }
-    let found = match &devices.get_mounted_to(opt.to.clone()) {
+    let found = match devices.get_mounted_to(opt.to.clone()) {
         Some(device) => {
             info!("folder {} is already used by {}\n", opt.to, device.name);
-            device.clone()
+            device
         }
         None => {
             let found = devices
                 .get_biggest_unmounted()
                 .context("failed to find target block device")?;
             mounting(client, &found.name, &opt.to, &found.blocktype, "ext4").await?;
-            found.clone()
+            found
         }
     };
 
@@ -209,12 +209,10 @@ pub async fn on_check(client: &Client, opt: &MountOptions) -> anyhow::Result<Sta
             format!("/dev/{}", device.name)
         }
         None => {
-            let Some(found) = devices
-                .get_biggest_unmounted()
-                else {
-                    fail.push("failed to find target block device".to_string());
-                    return Ok(Status::NotInstalled{ success, fail })
-                };
+            let Some(found) = devices.get_biggest_unmounted() else {
+                fail.push("failed to find target block device".to_string());
+                return Ok(Status::NotInstalled { success, fail });
+            };
             format!("/dev/{}", found.name)
         }
     };

@@ -8,12 +8,12 @@ const SOURCES_LIST_PATH: &str = "/etc/apt/sources.list.d/hashicorp.list";
 
 #[instrument(skip(client))]
 pub async fn on_install(client: &Client, opt: &TerraformOptions) -> anyhow::Result<()> {
-    if !file_exists(client, GPG_PATH).await {
+    if !file_exists(client, GPG_PATH).await { // TODO: file could be empty
         // install GPG key
-        run(client, "sudo mkdir -m 0755 -p /etc/apt/share/keyrings").await?;
+        run(client, "sudo mkdir -m 0755 -p /usr/share/keyrings").await?;
 
         let origin = "https://apt.releases.hashicorp.com/gpg";
-        let cmd = format!("wget -O- {} | sudo gpg --dearmor -o {}", origin, GPG_PATH);
+        let cmd = format!("curl -s {} | sudo gpg --dearmor -o {}", origin, GPG_PATH);
         run(client, &cmd).await?;
     }
 

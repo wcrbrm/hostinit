@@ -48,3 +48,7 @@ docker-stats = {}
 ### Disclaimer
 
 This is a proof on concept of how Rust can take Ansible responsibilities
+
+### Licence
+
+MIT

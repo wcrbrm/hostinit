@@ -10,5 +10,6 @@
 ## Todo
 
 - [ ] SSH: nopasswd visudo
-- [ ] SSH: keep alive configuration
+- [ ] SSHD: keep alive configuration: TCPKeepAlive yes, ClientAliveInterval 60, ClientAliveCountMax 10000 
+- [ ] SSHD: Macs hmac-sha2-256,hmac-sha2-512
 - [ ] Example of integration testing with a docker container
